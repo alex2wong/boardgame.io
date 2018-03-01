@@ -48,6 +48,7 @@ export class HexGrid extends React.Component {
     colorMap: {},
     outline: true,
     cellSize: 1,
+    style: {transform: 'perspective(600px) translateZ(0px) rotateX(36deg)'}
   };
 
   _getCellColor(x, y, z) {
@@ -55,6 +56,7 @@ export class HexGrid extends React.Component {
     let color = 'white';
     if (key in this.props.colorMap) {
       color = this.props.colorMap[key];
+      console.warn(`getCellColor: ${key}, color:${color}`)
     }
     return color;
   }
@@ -85,11 +87,30 @@ export class HexGrid extends React.Component {
         );
       }
     }
+    // this.setState({colorMap: {}});
     return hexes;
+  }
+
+  _getNearGrids(args) {
+    console.warn(`args: ${args['x']}, ${args['y']}, ${args['z']}`);
+    const {x, y, z} = args;
+    return [
+      {x: x-1,y, z:z+1},{x:x-1,y:y+1,z},{x,y:y-1,z:z+1},{x:x+1,y:y-1,z},{x,y:y+1,z:z-1},{x:x+1,y,z:z-1}
+    ]
   }
 
   onClick = args => {
     if (this.props.onClick) {
+      // highlight the neighbor
+      const ret = this._getNearGrids(args);
+      // change colorMaps. 
+      let colorMap = {};
+      ret.map((grid) => {
+        const key = `${grid.x},${grid.y},${grid.z}`;
+        colorMap[key] = 'rgba(10, 220, 30)';
+        console.warn(`current colorMap key: ${key}`)
+      });
+      this.setState({colorMap: colorMap});
       this.props.onClick(args);
     }
   };
@@ -155,9 +176,13 @@ export class Hex extends React.Component {
     size: PropTypes.number,
     style: PropTypes.any,
     onClick: PropTypes.func,
+<<<<<<< HEAD
     onMouseOver: PropTypes.func,
     onMouseOut: PropTypes.func,
     children: PropTypes.element,
+=======
+    children: PropTypes.element, //wtf
+>>>>>>> debug hex coordinates
   };
 
   static defaultProps = {
@@ -287,6 +312,7 @@ export class Hex extends React.Component {
           stroke="#aaa"
           strokeWidth={0.01}
         />
+        <text fontSize='.4' x='-.5'>{this.props.x},{this.props.y},{this.props.z}</text>
       </g>
     );
   }
