@@ -176,13 +176,9 @@ export class Hex extends React.Component {
     size: PropTypes.number,
     style: PropTypes.any,
     onClick: PropTypes.func,
-<<<<<<< HEAD
     onMouseOver: PropTypes.func,
     onMouseOut: PropTypes.func,
     children: PropTypes.element,
-=======
-    children: PropTypes.element, //wtf
->>>>>>> debug hex coordinates
   };
 
   static defaultProps = {
@@ -312,7 +308,7 @@ export class Hex extends React.Component {
           stroke="#aaa"
           strokeWidth={0.01}
         />
-        <text fontSize='.4' x='-.5'>{this.props.x},{this.props.y},{this.props.z}</text>
+        <text fontSize='.4' x='-.5'>{this.props.x.toFixed(0)},{this.props.y.toFixed(0)},{this.props.z.toFixed(0)}</text>
       </g>
     );
   }
