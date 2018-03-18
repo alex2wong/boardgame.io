@@ -32,6 +32,7 @@ export class HexGrid extends React.Component {
     levels: PropTypes.number.isRequired,
     outline: PropTypes.bool,
     style: PropTypes.object,
+    range: PropTypes.number,
     colorMap: PropTypes.object,
     cellSize: PropTypes.number,
     onClick: PropTypes.func,
@@ -43,20 +44,28 @@ export class HexGrid extends React.Component {
     ]),
   };
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      colorMap: this.props.colorMap,
+    }
+  }
+
   static defaultProps = {
     levels: 5,
     colorMap: {},
     outline: true,
     cellSize: 1,
+    range: 3,
     style: {transform: 'perspective(600px) translateZ(0px) rotateX(36deg)'}
   };
 
   _getCellColor(x, y, z) {
     const key = `${x},${y},${z}`;
     let color = 'white';
-    if (key in this.props.colorMap) {
-      color = this.props.colorMap[key];
-      console.warn(`getCellColor: ${key}, color:${color}`)
+    if (key in this.state.colorMap) {
+      color = this.state.colorMap[key];
+      // console.warn(`getCellColor: ${key}, color:${color}`)
     }
     return color;
   }
@@ -91,27 +100,66 @@ export class HexGrid extends React.Component {
     return hexes;
   }
 
-  _getNearGrids(args) {
-    console.warn(`args: ${args['x']}, ${args['y']}, ${args['z']}`);
+  _getNearGrids(args, range) {
+    console.warn(`args: ${args['x']}, ${args['y']}, ${args['z']}, range: ${range}`);
     const {x, y, z} = args;
-    return [
-      {x: x-1,y, z:z+1},{x:x-1,y:y+1,z},{x,y:y-1,z:z+1},{x:x+1,y:y-1,z},{x,y:y+1,z:z-1},{x:x+1,y,z:z-1}
-    ]
+    let results = [];
+    for (let dx = - range; dx < range + 1; dx++) {
+      const minDy = Math.max(-range, -dx - range);
+      const maxDy = Math.min(range, -dx + range);
+      for (let dy = minDy; dy < maxDy + 1; dy++) {
+        results.push({x:x + dx, y:y + dy, z:-x - y - dx -dy});
+      }
+    }
+    results.push(args);
+    return results;
+  }
+
+  _highlightNeighbor(colorMap) {
+    this.setState({colorMap: colorMap});
+  }
+
+  componentWillMount() {
+    let tokens = this.props.children; // React.element..{props,}
+    const highlightRange = this.getLimitNeighbors(tokens, this.props.range);
+    this._highlightNeighbor(highlightRange);
+    console.log(`component will mount.. tokenX: ${tokens.x}`);
+  }
+
+  getLimitNeighbors(center, range = 3) {
+    if (center) {
+      const ret = this._getNearGrids(center,range);
+      let colorMap = {};
+      ret.map((grid) => {
+        const key = `${grid.x},${grid.y},${grid.z}`;
+        colorMap[key] = '#22ff66';
+        // console.warn(`current colorMap key: ${key}`)
+      });
+      return colorMap;
+    }
+  }
+
+  inRange(target, center, range) {
+    const coordinate = `${target.x},${target.y},${target.z}`;
+    const neighbors = this.getLimitNeighbors(center, range);
+    if (coordinate in neighbors) 
+      return true;
+    else
+      return false;
+  }
+
+  componentDidUpdate() {
   }
 
   onClick = args => {
     if (this.props.onClick) {
-      // highlight the neighbor
-      const ret = this._getNearGrids(args);
-      // change colorMaps. 
-      let colorMap = {};
-      ret.map((grid) => {
-        const key = `${grid.x},${grid.y},${grid.z}`;
-        colorMap[key] = 'rgba(10, 220, 30)';
-        console.warn(`current colorMap key: ${key}`)
-      });
-      this.setState({colorMap: colorMap});
-      this.props.onClick(args);
+      // tokens included by Hexgrids..
+      let tokens = this.props.children; // React.element..{props,}
+      if (this.inRange(args, tokens.props, this.props.range)) {
+        const highlightRange = this.getLimitNeighbors(args, this.props.range);
+        this._highlightNeighbor(highlightRange);
+        this.props.onClick(args); // args from clicked Hex.
+      }
     }
   };
 
@@ -282,6 +330,7 @@ export class Hex extends React.Component {
 
     // If a child is passed, render child.
     if (this.props.children) {
+      console.log(`in Hex render, if token exists..X:${this.props.x}`);
       return (
         <g
           onClick={this.onClick}

@@ -43,6 +43,38 @@ function Basic() {
   );
 }
 
+function TokenRange() {
+  const levels = number('levels', 5);
+  const outline = boolean('outline', true);
+  const animate = boolean('animate', true);
+  const range = number('range', 3);
+
+  class Runner extends React.Component {
+    state = { x: 0, y: 0, z: 0 };
+    onClick = args => {
+      this.setState(args);
+      action('onClick')(args);
+    };
+    render = () => (
+      <HexGrid levels={levels} range={range} outline={outline} onClick={this.onClick}>
+        <Token
+          x={this.state.x}
+          y={this.state.y}
+          z={this.state.z}
+          animate={animate}
+          style={{ fill: '#555' }}
+        />
+      </HexGrid>
+    );
+  }
+
+  return (
+    <div style={{ padding: '50px' }}>
+      <Runner />
+    </div>
+  );
+}
+
 function TokenTrail() {
   const levels = number('levels', 5);
   const outline = boolean('outline', true);
@@ -86,4 +118,5 @@ function TokenTrail() {
 storiesOf('HexGrid', module)
   .addDecorator(withKnobs)
   .add('basic', Basic)
+  .add('Token with move range', TokenRange)
   .add('Tokens placed on hover', TokenTrail);
